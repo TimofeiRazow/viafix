@@ -35,12 +35,13 @@ class Complaint(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     image_path = Column(String(255))
-    category = Column(String(64))  # 'pothole', 'manhole', 'sidewalk_damage', etc.
+    category = Column(String(64))  # 'pothole', 'multiple_potholes', 'possible_pothole', etc.
     description = Column(Text)
     lat = Column(Float)
     lon = Column(Float)
     status = Column(String(32), default='pending')  # 'pending', 'processing', 'in_progress', 'resolved', 'rejected'
     organization_id = Column(Integer, ForeignKey("organizations.id"))
+    ai_confidence = Column(Float)  # Уверенность AI в обнаружении (0.0-1.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
