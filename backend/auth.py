@@ -9,6 +9,7 @@ from sqlalchemy.future import select
 from database import get_db
 from models import User
 from config import settings
+import bcrypt
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -68,4 +69,5 @@ def get_password_hash(password: str):
     # bcrypt ограничен 72 байтами, поэтому обрезаем пароль при необходимости
     if len(password.encode('utf-8')) > 72:
         password = password[:72]
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode('utf-8')[:72], bcrypt.gensalt())
+
