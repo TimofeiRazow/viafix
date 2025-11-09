@@ -15,8 +15,20 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 security = HTTPBearer()
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Verifies a plain password against a bcrypt hash.
+
+    Truncates the password to 72 bytes to comply with bcrypt limit.
+    """
+    # Ограничение bcrypt: только первые 72 байта учитываются
+    truncated_password = plain_password.encode('utf-8')[:72]
+
+    # hashed_password должен быть bytes, если он строка - перекодируем
+    if isinstance(hashed_password, str):
+        hashed_password = hashed_password.encode('utf-8')
+
+    return bcrypt.checkpw(truncated_password, hashed_password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -66,8 +78,5 @@ async def get_current_user(
 
 # Функция для получения токена (если вам все же нужна отдельная функция)
 def get_password_hash(password: str):
-    # bcrypt ограничен 72 байтами, поэтому обрезаем пароль при необходимости
-    if len(password.encode('utf-8')) > 72:
-        password = password[:72]
     return bcrypt.hashpw(password.encode('utf-8')[:72], bcrypt.gensalt())
 

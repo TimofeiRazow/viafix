@@ -40,8 +40,8 @@ class Complaint(Base):
     lat = Column(Float)
     lon = Column(Float)
     status = Column(String(32), default='pending')  # 'pending', 'processing', 'in_progress', 'resolved', 'rejected'
-    organization_id = Column(Integer, ForeignKey("organizations.id"))
-    ai_confidence = Column(Float)  # Уверенность AI в обнаружении (0.0-1.0)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
+    ai_confidence = Column(Float, nullable=True)  # Уверенность AI в обнаружении (0.0-1.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     

@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.staticfiles import StaticFiles
 from database import get_db, engine
 from models import Base
 from schemas import (
@@ -26,7 +27,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Complaint Management API with AI")
-
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -143,14 +144,17 @@ async def create_new_complaint(
     description: str = Form(None),
     lat: float = Form(...),
     lon: float = Form(...),
-    ai_category: str = Form(None),  # Категория от AI
-    ai_confidence: float = Form(None),  # Уверенность от AI
+    ai_category: str = Form(...),  # Категория от AI
+    ai_confidence: float = Form(...),  # Уверенность от AI
     current_user = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Создание обращения с возможной AI-категоризацией
     """
+    print("СЛОВО")
+    print(ai_category)
+    print(ai_confidence)
     # Save uploaded image
     file_extension = image.filename.split(".")[-1]
     unique_filename = f"{uuid.uuid4()}.{file_extension}"
@@ -180,7 +184,8 @@ async def create_new_complaint(
         lat=lat,
         lon=lon,
         category=ai_category,
-        ai_confidence=ai_confidence
+        ai_confidence = ai_confidence,
+        status="pending"
     )
     
     complaint = await create_complaint(db, complaint_data, current_user.id)
@@ -217,9 +222,6 @@ async def get_all_complaints_admin(
     current_user = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
     complaints, total = await get_admin_complaints(db, status, skip, limit)
     return ComplaintListResponse(complaints=complaints, total=total)
 
@@ -230,9 +232,6 @@ async def update_complaint_status(
     current_user = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
     updated_complaint = await update_complaint(db, complaint_id, complaint_update)
     if not updated_complaint:
         raise HTTPException(status_code=404, detail="Complaint not found")
